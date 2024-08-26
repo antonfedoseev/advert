@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  mysql:
+    restart: always
+    image: mysql:5.7.41
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: test
+      MYSQL_ROOT_HOST: 0.0.0.0
+    ports:
+      - "3306:3306"
+    volumes:
+      - e:/tools/mysql/pet/producer/data:/var/lib/mysql
+    networks:
+      - pet-backend-producer
+
+networks:
+  pet-backend-producer:
+    external: true

@@ -1,0 +1,32 @@
+version: '3.8'
+
+services:
+  producer:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: /app/server/producer/cmd/producer
+    container_name: producer
+    ports:
+      - "8989:8989"
+      - "40000:40000"
+    security_opt:
+      - "apparmor:unconfined"
+      - "seccomp:unconfined"
+    cap_add:
+      - SYS_PTRACE
+    volumes:
+      - server-data:/app/server/producer
+    networks:
+      - pet-backend-producer
+      - pet-backend-shared
+
+volumes:
+  server-data:
+    name: pet-server-producer-vol
+
+networks:
+  pet-backend-producer:
+    external: true
+  pet-backend-shared:
+    external: true

@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  redis:
+    restart: always
+    image: redis:6.0
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - e:/tools/redis/pet/producer/data:/data
+    networks:
+      - pet-backend-producer
+
+networks:
+  pet-backend-producer:
+    external: true
