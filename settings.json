@@ -1,7 +1,7 @@
 {
-  "dbs" : [
-    {"main"       : {"diver" : "mysql", "host" : "localhost", "port" : 3306, "username" : "root", "password" : "test", "name" : "pet_producer"}},
-    {"shard_01"   : {"diver" : "mysql", "host" : "localhost", "port" : 3306, "username" : "root", "password" : "test", "name" : "pet_producer_shard_01"}},
-    {"shard_02"   : {"diver" : "mysql", "host" : "localhost", "port" : 3306, "username" : "root", "password" : "test", "name" : "pet_producer_shard_02"}}
-  ]
+  "dbs" : {
+    "main"       : {"diver" : "mysql", "host" : "localhost", "port" : 3306, "username" : "root", "password" : "test", "name" : "pet_producer"},
+    "shard_01"   : {"diver" : "mysql", "host" : "localhost", "port" : 3306, "username" : "root", "password" : "test", "name" : "pet_producer_shard_01"},
+    "shard_02"   : {"diver" : "mysql", "host" : "localhost", "port" : 3306, "username" : "root", "password" : "test", "name" : "pet_producer_shard_02"}
+  }
 }
