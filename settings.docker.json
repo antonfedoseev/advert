@@ -1,0 +1,38 @@
+{
+  "url_listen"  : ":7979",
+  "log_level"   : 1,
+
+  "dbs" : {
+    "main"       : {"diver" : "mysql", "host" : "mysql", "port" : 3306, "username" : "root", "password" : "test", "name" : "pet_producer",              "max_idle_cons" : 10, "max_open_cons" : 0, "conn_max_lifetime_sec" : 0, "conn_max_idle_time_sec" : 600},
+    "shard_01"   : {"diver" : "mysql", "host" : "mysql", "port" : 3306, "username" : "root", "password" : "test", "name" : "pet_producer_shard_01",     "max_idle_cons" : 10, "max_open_cons" : 0, "conn_max_lifetime_sec" : 0, "conn_max_idle_time_sec" : 600},
+    "shard_02"   : {"diver" : "mysql", "host" : "mysql", "port" : 3306, "username" : "root", "password" : "test", "name" : "pet_producer_shard_02",     "max_idle_cons" : 10, "max_open_cons" : 0, "conn_max_lifetime_sec" : 0, "conn_max_idle_time_sec" : 600},
+    "shard_03"   : {"diver" : "mysql", "host" : "mysql", "port" : 3306, "username" : "root", "password" : "test", "name" : "pet_producer_shard_03",     "max_idle_cons" : 10, "max_open_cons" : 0, "conn_max_lifetime_sec" : 0, "conn_max_idle_time_sec" : 600}
+  },
+
+  "static_storage" : {
+      "path" : "pet/adverts",
+      "url"  : "http://nginx:80"
+  },
+
+  "message_broker" : {
+    "brokers"   : ["kafka1:9092", "kafka2:9093"],
+    "producer"  : {
+      "send_retries" : 3,
+      "conn_max_lifetime_sec" : 0,
+      "conn_max_idle_time_sec" : 600,
+      "topics" : [
+        "advert_process_photo_request"
+      ]
+    },
+    "consumer"  : {
+      "group_id" : "advertd",
+      "read_retries" : 3,
+      "workers_amount" : 10,
+      "conn_max_lifetime_sec" : 0,
+      "conn_max_idle_time_sec" : 600,
+      "topics" : [
+        "advert_process_photo_response"
+      ]
+    }
+  }
+}

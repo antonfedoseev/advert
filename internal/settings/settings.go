@@ -2,24 +2,18 @@ package settings
 
 import (
 	"encoding/json"
+	"internal/message_broker"
+	"internal/static_storage"
 	"os"
+	"pkg/db"
 )
 
-type DBSpec struct {
-	Diver    string `json:"diver"`
-	Host     string `json:"host"`
-	Port     int    `json:"port"`
-	Username string `json:"username"`
-	Password string `json:"password"`
-	Name     string `json:"name"`
-}
-
-type DBSettings struct {
-	DBs map[string]DBSpec `json:"dbs"`
-}
-
 type Settings struct {
-	DBSettings
+	UrlListen     string                  `json:"url_listen"`
+	LogLevel      int                     `json:"log_level"`
+	DBs           db.Settings             `json:"dbs"`
+	StaticStorage static_storage.Settings `json:"static_storage"`
+	MessageBroker message_broker.Settings `json:"message_broker"`
 }
 
 func (s *Settings) Read(filePath string) error {
