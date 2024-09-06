@@ -11,10 +11,10 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      - e:/tools/mysql/pet/producer/data:/var/lib/mysql
+      - e:/tools/mysql/pet/advert_service/data:/var/lib/mysql
     networks:
-      - pet-backend-producer
+      - pet-backend-advertd
 
 networks:
-  pet-backend-producer:
+  pet-backend-advertd:
     external: true

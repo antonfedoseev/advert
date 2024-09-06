@@ -1,12 +1,12 @@
 version: '3.8'
 
 services:
-  producer:
+  advertd:
     build:
       context: .
       dockerfile: Dockerfile
-    entrypoint: /app/server/producer/cmd/producer
-    container_name: producer
+    entrypoint: /app/server/advertd/cmd/advertd
+    container_name: advertd
     ports:
       - "7979:7979"
       - "44001:4001"
@@ -16,9 +16,9 @@ services:
     cap_add:
       - SYS_PTRACE
     volumes:
-      - server-data:/app/server/producer
+      - server-data:/app/server/advertd
     networks:
-      - pet-backend-producer
+      - pet-backend-advertd
       - pet-backend-shared
 
 volumes:
@@ -26,7 +26,7 @@ volumes:
     name: pet-server-vol
 
 networks:
-  pet-backend-producer:
+  pet-backend-advertd:
     external: true
   pet-backend-shared:
     external: true

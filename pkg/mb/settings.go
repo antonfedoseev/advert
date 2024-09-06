@@ -1,4 +1,4 @@
-package message_broker
+package mb
 
 type ProducerSpec struct {
 	SendRetries        int `json:"send_retries"`

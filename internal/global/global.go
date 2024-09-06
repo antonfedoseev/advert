@@ -2,10 +2,10 @@ package global
 
 import (
 	"github.com/go-logr/logr"
-	"internal/message_broker"
-	"internal/redisdb"
 	"internal/settings"
 	"pkg/db"
+	"pkg/mb"
+	"pkg/rd"
 )
 
 type Hub struct {
@@ -14,23 +14,28 @@ type Hub struct {
 	Logger     logr.Logger
 	AppName    string
 	Db         *db.DB
-	RedisDb    *redisdb.Pool
-	MbProducer *message_broker.Producer
+	Rd         *rd.RD
+	MbProducer *mb.Producer
 }
 
 func (g *Hub) Dispose() {
 	if g.Db != nil {
 		g.Db.Dispose()
 	}
+
+	if g.Rd != nil {
+		g.Rd.Dispose()
+	}
 }
 
 func New(exPath string, settings settings.Settings, logger logr.Logger, appName string,
-	mbProducer *message_broker.Producer) Hub {
+	mbProducer *mb.Producer) Hub {
 	return Hub{
 		ExPath:     exPath,
 		Settings:   settings,
 		Logger:     logger,
 		Db:         db.New(settings.DBs),
+		Rd:         rd.New(settings.RDs, logger),
 		AppName:    appName,
 		MbProducer: mbProducer,
 	}

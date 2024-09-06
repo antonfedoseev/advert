@@ -1,17 +1,14 @@
-package message_broker
+package mb
 
 import (
 	"context"
 	"fmt"
 	"github.com/go-logr/logr"
 	"github.com/segmentio/kafka-go"
-	"internal/env"
-	"internal/global"
 )
 
 type Consumer struct {
 	ctx            context.Context
-	hub            global.Hub
 	brokers        []string
 	settings       ConsumerSpec
 	logger         logr.Logger
@@ -21,15 +18,16 @@ type Consumer struct {
 	messages       chan *kafka.Message
 }
 
-type MessageHandler func(env *env.Environment, m *kafka.Message) error
+type MessageHandler interface {
+	Handle(logger logr.Logger, m *kafka.Message) error
+}
 
-func NewConsumer(ctx context.Context, hub global.Hub, settings Settings, messageHandler MessageHandler) *Consumer {
+func NewConsumer(ctx context.Context, settings Settings, logger logr.Logger, messageHandler MessageHandler) *Consumer {
 	c := &Consumer{
 		ctx:            ctx,
-		hub:            hub,
 		settings:       settings.Consumer,
 		brokers:        settings.Brokers,
-		logger:         hub.Logger.WithName("[message broker]"),
+		logger:         logger.WithName("[message broker][consumer]"),
 		messageHandler: messageHandler,
 		stop:           make(chan struct{}),
 		messages:       make(chan *kafka.Message, settings.Consumer.WorkersAmount),
@@ -41,15 +39,13 @@ func NewConsumer(ctx context.Context, hub global.Hub, settings Settings, message
 	return c
 }
 
-func (c *Consumer) setupReader() *kafka.Reader {
+func (c *Consumer) setupReader() {
 	config := kafka.ReaderConfig{
 		Brokers:     c.brokers,
 		GroupID:     c.settings.GroupId,
 		MaxAttempts: c.settings.ReadRetries,
 	}
-	r := kafka.NewReader(config)
-
-	return r
+	c.reader = kafka.NewReader(config)
 }
 
 func (c *Consumer) read() {
@@ -97,11 +93,7 @@ func (c *Consumer) handle() {
 }
 
 func (c *Consumer) handleMessage(m *kafka.Message) {
-	env := env.NewEnvironment(c.hub)
-	env.Logger = env.Logger.WithName(fmt.Sprintf("[message broker][message][%s][%s]", m.Topic, m.Key))
-	defer env.Close()
-
-	err := c.messageHandler(env, m)
+	err := c.messageHandler.Handle(c.logger, m)
 	if err != nil {
 		c.logger.Error(err, fmt.Sprintf("error of handling message: \"%v\".", *m))
 		return

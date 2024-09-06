@@ -2,18 +2,20 @@ package settings
 
 import (
 	"encoding/json"
-	"internal/message_broker"
 	"internal/static_storage"
 	"os"
 	"pkg/db"
+	"pkg/mb"
+	"pkg/rd"
 )
 
 type Settings struct {
 	UrlListen     string                  `json:"url_listen"`
 	LogLevel      int                     `json:"log_level"`
 	DBs           db.Settings             `json:"dbs"`
+	RDs           rd.Settings             `json:"rds"`
 	StaticStorage static_storage.Settings `json:"static_storage"`
-	MessageBroker message_broker.Settings `json:"message_broker"`
+	MessageBroker mb.Settings             `json:"mb"`
 }
 
 func (s *Settings) Read(filePath string) error {

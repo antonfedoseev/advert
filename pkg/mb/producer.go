@@ -1,4 +1,4 @@
-package message_broker
+package mb
 
 import (
 	"context"
@@ -63,7 +63,7 @@ func (p *Producer) createWriter() *kafka.Writer {
 		Addr:     kafka.TCP(p.brokers...),
 		Balancer: &kafka.LeastBytes{},
 		Transport: &kafka.Transport{
-			Dial:        (&net.Dialer{DualStack: true}).DialContext,
+			Dial:        (&net.Dialer{}).DialContext,
 			IdleTimeout: time.Duration(p.settings.ConnMaxIdleTimeSec) * time.Second,
 			DialTimeout: time.Duration(p.settings.ConnMaxLifetimeSec) * time.Second,
 		},

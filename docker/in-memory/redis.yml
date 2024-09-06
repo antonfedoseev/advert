@@ -8,10 +8,10 @@ services:
     ports:
       - "6379:6379"
     volumes:
-      - e:/tools/redis/pet/producer/data:/data
+      - e:/tools/redis/pet/advert_service/data:/data
     networks:
-      - pet-backend-producer
+      - pet-backend-advertd
 
 networks:
-  pet-backend-producer:
+  pet-backend-advertd:
     external: true

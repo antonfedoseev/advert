@@ -7,8 +7,8 @@ import (
 	"github.com/gomodule/redigo/redis"
 	"github.com/pkg/errors"
 	"internal/constant"
-	"internal/redisdb"
 	"pkg/db"
+	"pkg/rd"
 )
 
 const (
@@ -16,7 +16,7 @@ const (
 	rdUserShardCacheSec = 86400 * 3
 )
 
-func GetShardDbByUserId(mainDb *db.Conn, shardPools []*db.Pool, rdp *redisdb.Pool, logger logr.Logger, id uint32) (
+func GetShardDbByUserId(mainDb *db.Conn, shardPools []*db.Pool, rdp *rd.Pool, logger logr.Logger, id uint32) (
 	*db.Conn, uint32, error) {
 
 	rdKey := rdUserShardKey + fmt.Sprintf("%d", id)

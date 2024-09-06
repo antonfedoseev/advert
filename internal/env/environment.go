@@ -4,10 +4,10 @@ import (
 	"github.com/go-logr/logr"
 	"internal/dbshard"
 	"internal/global"
-	"internal/message_broker"
-	"internal/redisdb"
 	"internal/settings"
 	"pkg/db"
+	"pkg/mb"
+	"pkg/rd"
 )
 
 type Environment struct {
@@ -55,7 +55,7 @@ func (env *Environment) ShardDb(userId uint32) (*db.Conn, error) {
 		return db, nil
 	}
 
-	db, shardId, err := dbshard.GetShardDbByUserId(env.mainDbConn, env.hub.Db.Shards(), env.Rd(), env.Logger, userId)
+	db, shardId, err := dbshard.GetShardDbByUserId(env.mainDbConn, env.hub.Db.Shards(), env.hub.Rd.MainPool(), env.Logger, userId)
 	if err != nil {
 		return nil, err
 	}
@@ -82,14 +82,14 @@ func (env *Environment) setupShardDb(shardId uint32, shardDb *db.Conn) {
 	shardDb.Logger = env.Logger.WithValues("shard", shardId)
 }
 
-func (env *Environment) Rd() *redisdb.Pool {
-	return env.hub.RedisDb
+func (env *Environment) Rd() *rd.RD {
+	return env.hub.Rd
 }
 
 func (env *Environment) AppName() string {
 	return env.hub.AppName
 }
 
-func (env *Environment) MbProducer() *message_broker.Producer {
+func (env *Environment) MbProducer() *mb.Producer {
 	return env.hub.MbProducer
 }

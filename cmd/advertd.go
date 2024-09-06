@@ -6,14 +6,11 @@ import (
 	"fmt"
 	"github.com/go-logr/logr"
 	"github.com/go-logr/zapr"
-	"github.com/segmentio/kafka-go"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"internal/advert"
 	"internal/constant"
-	"internal/env"
 	"internal/global"
-	"internal/message_broker"
+	"internal/rpc"
 	"internal/settings"
 	"internal/upload"
 	"log"
@@ -24,6 +21,7 @@ import (
 	"os/signal"
 	"path"
 	"pkg/expath"
+	"pkg/mb"
 	"runtime"
 	"strings"
 	"syscall"
@@ -32,19 +30,19 @@ import (
 
 const (
 	logo = `
-||||||||||
-||      ||
-||      ||
-||||||||||
-||
-||
-||
+      ||
+     ||||
+    ||  ||
+   ||    ||
+  ||||||||||
+ ||        ||
+||          ||
 `
-	appName = "producer"
+	appName = "advertd"
 )
 
 var (
-	pidFile = flag.String("pid-file", "", "path to to pid file")
+	pidFile = flag.String("pid-file", "advertd.pid", "path to to pid file")
 )
 
 func main() {
@@ -62,17 +60,17 @@ func main() {
 	}
 
 	logger := newLogger(settings.LogLevel, constant.LogAppPrefix)
-	logger.Info("Starting producer", "executable_path", exPath,
+	logger.Info("Starting advertd", "executable_path", exPath,
 		"version", constant.AppVersion, "runtime_version", runtime.Version(), "os", runtime.GOOS, "arch", runtime.GOARCH,
 		"addr", settings.UrlListen, "pid_file", *pidFile)
 	logger.V(1).Info(logo)
 
-	producer := message_broker.NewProducer(settings.MessageBroker)
+	producer := mb.NewProducer(settings.MessageBroker)
 
 	hub := global.New(exPath, settings, logger, appName, producer)
 	defer hub.Dispose()
 
-	consumer := message_broker.NewConsumer(ctx, hub, settings.MessageBroker, handleMessage)
+	consumer := mb.NewConsumer(ctx, settings.MessageBroker, logger, rpc.NewMbHandler(hub))
 	defer consumer.Close()
 
 	startPprof()
@@ -169,15 +167,7 @@ func newServer(globs global.Hub) *http.Server {
 }
 
 func initHandlers(mux *http.ServeMux, globs global.Hub) error {
-	mux.Handle("/gateway_upload_image", upload.NewServer(globs))
+	mux.Handle("/gateway_create_advert", upload.NewServer(globs))
 
-	return nil
-}
-
-func handleMessage(env *env.Environment, m *kafka.Message) error {
-	switch m.Topic {
-	case "cut_photo_response":
-		return advert.ResponsePhotoProcess(env, m)
-	}
 	return nil
 }

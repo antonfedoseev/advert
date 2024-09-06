@@ -1,13 +1,13 @@
 version: '3.8'
 
 services:
-  producer:
+  advertd:
     build:
       context: .
       dockerfile: Dockerfile-debug
-    #command: /dlv --listen=:47979 --headless=true --api-version=2 --accept-multiclient --check-go-version=false --only-same-user=false exec /app/server/producer/cmd/producer
-    entrypoint: /dlv --listen=:47979 --headless=true --api-version=2 --accept-multiclient --check-go-version=false --only-same-user=false exec /app/server/producer/cmd/producer
-    container_name: producer
+    #command: /dlv --listen=:47979 --headless=true --api-version=2 --accept-multiclient --check-go-version=false --only-same-user=false exec /app/server/advertd/cmd/advertd
+    entrypoint: /dlv --listen=:47979 --headless=true --api-version=2 --accept-multiclient --check-go-version=false --only-same-user=false exec /app/server/advertd/cmd/advertd
+    container_name: advertd
     ports:
       - "7979:7979"
       - "47979:47979"
@@ -18,9 +18,9 @@ services:
     cap_add:
       - SYS_PTRACE
     volumes:
-      - server-data:/app/server/producer
+      - server-data:/app/server/advertd
     networks:
-      - pet-backend-producer
+      - pet-backend-advertd
       - pet-backend-shared
 
 volumes:
@@ -28,7 +28,7 @@ volumes:
     name: pet-server-vol
 
 networks:
-  pet-backend-producer:
+  pet-backend-advertd:
     external: true
   pet-backend-shared:
     external: true

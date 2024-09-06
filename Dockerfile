@@ -5,10 +5,10 @@ FROM golang:1.22.3-alpine AS build
 RUN go version
 ENV GOPATH=/
 
-COPY ["cmd",                   "/app/server/producer/cmd"]
-COPY ["internal",              "/app/server/producer/internal"]
-COPY ["pkg",                   "/app/server/producer/pkg"]
-COPY ["settings.docker.json",  "/app/server/producer/settings.json"]
+COPY ["cmd",                    "/app/server/advertd/cmd"]
+COPY ["internal",               "/app/server/advertd/internal"]
+COPY ["pkg",                    "/app/server/advertd/pkg"]
+COPY ["settings.docker.json",   "/app/server/advertd/settings.json"]
 
 # Add CGO compiler
 RUN apk add build-base
@@ -16,16 +16,16 @@ RUN apk add build-base
 
 
 
+
 # build go app
-WORKDIR /app/server/producer/cmd
+WORKDIR /app/server/advertd/cmd
 RUN go mod tidy -e
 RUN go mod download
-RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o producer ./producer.go
+RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o advertd ./advertd.go
 
 # Final stage
-#FROM debian:buster AS run
 FROM alpine:3.20.2 AS run
 
 WORKDIR /
-COPY --from=build /app/server/producer/cmd/producer     /app/server/producer/cmd/producer
-COPY --from=build /app/server/producer/settings.json    /app/server/producer/cmd/settings.json
+COPY --from=build /app/server/advertd/cmd/advertd     /app/server/advertd/cmd/advertd
+COPY --from=build /app/server/advertd/settings.json    /app/server/advertd/cmd/settings.json
