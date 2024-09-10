@@ -14,7 +14,13 @@ type UpdateBuilder struct {
 
 func (b *UpdateBuilder) Exec() (sql.Result, error) {
 	sql, args := b.origin.Build()
-	args = append(b.args, args)
+
+	if len(args) == 0 {
+		args = b.args
+	} else if len(b.args) != 0 {
+		args = append(b.args, args...)
+	}
+
 	runner := b.dbConn.getExecRunner()
 	return runner.NamedExec(sql, args)
 }

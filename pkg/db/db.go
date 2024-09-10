@@ -3,7 +3,9 @@ package db
 import (
 	"errors"
 	"fmt"
-	//_ "github.com/go-sql-driver/mysql"
+	_ "github.com/go-sql-driver/mysql"
+	"sort"
+
 	//_ "github.com/lib/pq"
 	"github.com/jmoiron/sqlx"
 	"strings"
@@ -43,11 +45,15 @@ func (d *DB) Shards() []*Pool {
 }
 
 func (d *DB) defineShardsPools() {
+	shards := make(Pools, 0)
 	for alias, pool := range d.pools {
 		if strings.HasPrefix(alias, shardDbAliasPrefix) {
-			d.shardPools = append(d.shardPools, pool)
+			shards = append(shards, pool)
 		}
 	}
+
+	sort.Sort(&shards)
+	d.shardPools = shards
 }
 
 func (d *DB) openConnectionsPools() {

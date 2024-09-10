@@ -44,6 +44,7 @@ func (c *Consumer) setupReader() {
 		Brokers:     c.brokers,
 		GroupID:     c.settings.GroupId,
 		MaxAttempts: c.settings.ReadRetries,
+		GroupTopics: c.settings.Topics,
 	}
 	c.reader = kafka.NewReader(config)
 }

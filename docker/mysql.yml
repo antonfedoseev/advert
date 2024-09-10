@@ -11,7 +11,7 @@ services:
     ports:
       - "3306:3306"
     volumes:
-      - e:/tools/mysql/pet/advert_service/data:/var/lib/mysql
+      - ../../persistent/mysql/advert/data:/var/lib/mysql
     networks:
       - pet-backend-advertd
 

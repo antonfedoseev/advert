@@ -3,4 +3,4 @@ CREATE TABLE `user_shard` (
   `shard_id`   tinyint(3) unsigned NOT NULL,
   
   PRIMARY KEY `user_id` (`user_id`)
-) ENGINE=InnoDB;
+) CHARACTER SET utf8 COLLATE utf8_general_ci ENGINE=InnoDB;

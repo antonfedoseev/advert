@@ -3,4 +3,4 @@ CREATE TABLE `user` (
   `name`       varchar(255) NOT NULL,
   
   PRIMARY KEY `id` (`id`)
-) ENGINE=InnoDB;
+) CHARACTER SET utf8 COLLATE utf8_general_ci ENGINE=InnoDB;

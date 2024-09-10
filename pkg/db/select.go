@@ -44,10 +44,14 @@ func (b *SelectBuilder) LoadStructs(dest interface{}) (int, error) {
 	}
 
 	sql, args := b.origin.Build()
-	args = append(b.args, args)
+	if len(args) == 0 {
+		args = b.args
+	} else if len(b.args) != 0 {
+		args = append(b.args, args...)
+	}
 
 	runner := b.dbConn.getSelectRunner()
-	err := runner.Select(dest, sql, args)
+	err := runner.Select(dest, sql, args...)
 
 	return valueOfDest.Len(), err
 }
@@ -65,10 +69,14 @@ func (b *SelectBuilder) LoadStruct(dest interface{}) error {
 	}
 
 	sql, args := b.origin.Build()
-	args = append(b.args, args)
+	if len(args) == 0 {
+		args = b.args
+	} else if len(b.args) != 0 {
+		args = append(b.args, args...)
+	}
 
 	runner := b.dbConn.getSelectRunner()
-	err := runner.Select(dest, sql, args)
+	err := runner.Get(dest, runner.Rebind(sql), args...)
 
 	return err
 }
@@ -95,10 +103,14 @@ func (b *SelectBuilder) LoadValues(dest interface{}) (int, error) {
 	}
 
 	sql, args := b.origin.Build()
-	args = append(b.args, args)
+	if len(args) == 0 {
+		args = b.args
+	} else if len(b.args) != 0 {
+		args = append(b.args, args...)
+	}
 
 	runner := b.dbConn.getSelectRunner()
-	err := runner.Select(dest, sql, args)
+	err := runner.Select(dest, sql, args...)
 
 	return valueOfDest.Len(), err
 }
@@ -114,10 +126,14 @@ func (b *SelectBuilder) LoadValue(dest interface{}) error {
 	}
 
 	sql, args := b.origin.Build()
-	args = append(b.args, args)
+	if len(args) == 0 {
+		args = b.args
+	} else if len(b.args) != 0 {
+		args = append(b.args, args...)
+	}
 
 	runner := b.dbConn.getSelectRunner()
-	err := runner.Select(dest, sql, args)
+	err := runner.Get(dest, sql, args...)
 
 	return err
 }

@@ -55,7 +55,7 @@ func (env *Environment) ShardDb(userId uint32) (*db.Conn, error) {
 		return db, nil
 	}
 
-	db, shardId, err := dbshard.GetShardDbByUserId(env.mainDbConn, env.hub.Db.Shards(), env.hub.Rd.MainPool(), env.Logger, userId)
+	db, shardId, err := dbshard.GetShardDbByUserId(env.MainDb(), env.hub.Db.Shards(), env.hub.Rd.MainPool(), env.Logger, userId)
 	if err != nil {
 		return nil, err
 	}

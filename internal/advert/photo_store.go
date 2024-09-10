@@ -19,21 +19,19 @@ type photoInfo struct {
 }
 
 func storeUserPhotos(ctx context.Context, env *env.Environment, userId uint, advertId uint,
-	multiFiles map[string][]*multipart.FileHeader) ([]string, error) {
+	multiFiles []*multipart.FileHeader) ([]string, error) {
 
 	list := make([]*photoInfo, 0)
 	i := 0
 	stamp := uint32(time.Now().Unix())
 
-	for _, files := range multiFiles {
-		for _, file := range files {
-			ext := filepath.Ext(file.Filename)
-			userIdHash := sha256.Sum256([]byte(fmt.Sprintf("%d", userId)))
-			hash := sha256.Sum256([]byte(fmt.Sprintf("%d_%d_%d", advertId, i, stamp)))
-			name := fmt.Sprintf("%s.%s%s", userIdHash, hash, ext)
-			list = append(list, &photoInfo{Name: name, File: file})
-			i++
-		}
+	for _, file := range multiFiles {
+		ext := filepath.Ext(file.Filename)
+		userIdHash := sha256.Sum256([]byte(fmt.Sprintf("%d", userId)))
+		hash := sha256.Sum256([]byte(fmt.Sprintf("%d_%d_%d", advertId, i, stamp)))
+		name := fmt.Sprintf("%x_%x%s", userIdHash, hash, ext)
+		list = append(list, &photoInfo{Name: name, File: file})
+		i++
 	}
 
 	err := saveFiles(ctx, env, list)

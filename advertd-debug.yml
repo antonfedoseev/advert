@@ -5,27 +5,27 @@ services:
     build:
       context: .
       dockerfile: Dockerfile-debug
-    #command: /dlv --listen=:47979 --headless=true --api-version=2 --accept-multiclient --check-go-version=false --only-same-user=false exec /app/server/advertd/cmd/advertd
-    entrypoint: /dlv --listen=:47979 --headless=true --api-version=2 --accept-multiclient --check-go-version=false --only-same-user=false exec /app/server/advertd/cmd/advertd
+    entrypoint: /dlv --listen=:7100 --headless=true --api-version=2 --accept-multiclient --check-go-version=false --only-same-user=false exec /app/server/advertd/cmd/advertd
     container_name: advertd
     ports:
-      - "7979:7979"
-      - "47979:47979"
-      - "44001:4001"
+      - "7000:7000" #advertd
+      - "7100:7100" #delve
+      - "7200:7200" #pprof
     security_opt:
       - "apparmor:unconfined"
       - "seccomp:unconfined"
     cap_add:
       - SYS_PTRACE
     volumes:
-      - server-data:/app/server/advertd
+      - persistent-data:/pet
     networks:
       - pet-backend-advertd
       - pet-backend-shared
 
 volumes:
-  server-data:
-    name: pet-server-vol
+  persistent-data:
+    external: true
+    name: pet-persistent-vol
 
 networks:
   pet-backend-advertd:

@@ -25,13 +25,14 @@ func GetShardDbByUserId(mainDb *db.Conn, shardPools []*db.Pool, rdp *rd.Pool, lo
 
 	rdShardId, err := redis.Uint64(rdp.Do("GET", rdKey))
 	if err == redis.ErrNil {
-		shardId, err := FindUserShardById(mainDb, id)
+		dbShardId, err := FindUserShardById(mainDb, id)
 		if err != nil {
 			return nil, 0, err
 		}
 
 		//NOTE: don't care about error here
-		rdp.Do("SETEX", rdKey, rdUserShardCacheSec, shardId)
+		rdp.Do("SETEX", rdKey, rdUserShardCacheSec, dbShardId)
+		shardId = uint32(dbShardId)
 	} else {
 		if err != nil {
 			return nil, 0, errors.WithStack(err)
@@ -47,13 +48,16 @@ func GetShardDbByUserId(mainDb *db.Conn, shardPools []*db.Pool, rdp *rd.Pool, lo
 	return db, shardId, err
 }
 
+var errUserNotRegistered = errors.New("user not registered")
+
 func FindUserShardById(mainDb *db.Conn, userId uint32) (int, error) {
 	var shardId int
-	err := mainDb.SelectBySQL("SELECT shard_id FROM user_shard WHERE user_id = ? LIMIT 1", userId).LoadValue(&shardId)
+	sb := mainDb.Select("shard_id")
+	err := sb.From("user_shard").Where(sb.Equal("user_id", userId)).Limit(1).LoadValue(&shardId)
 
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return -1, nil
+			return -1, errors.Wrapf(errUserNotRegistered, ": user id \"%d\" not found", userId)
 		} else {
 			return -1, errors.WithStack(err)
 		}

@@ -10,10 +10,14 @@ import (
 
 type selectRunner interface {
 	Select(dest interface{}, query string, args ...interface{}) error
+	Get(dest interface{}, query string, args ...interface{}) error
+	Rebind(query string) string
 }
 
 type execRunner interface {
 	NamedExec(query string, arg interface{}) (sql.Result, error)
+	MustExec(query string, args ...interface{}) sql.Result
+	Exec(query string, args ...interface{}) (sql.Result, error)
 }
 
 type Conn struct {
@@ -171,14 +175,14 @@ func (dbConn *Conn) InsertInto(table string) *InsertBuilder {
 	flavor := dbConn.getFlavor()
 	ib := flavor.NewInsertBuilder()
 	ib = ib.InsertInto(table)
-	return &InsertBuilder{ib, dbConn}
+	return &InsertBuilder{origin: ib, dbConn: dbConn}
 }
 
 func (dbConn *Conn) ReplaceInto(table string) *InsertBuilder {
 	flavor := dbConn.getFlavor()
 	ib := flavor.NewInsertBuilder()
 	ib = ib.ReplaceInto(table)
-	return &InsertBuilder{ib, dbConn}
+	return &InsertBuilder{origin: ib, dbConn: dbConn}
 }
 
 func (dbConn *Conn) Update(table string) *UpdateBuilder {

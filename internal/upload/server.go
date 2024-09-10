@@ -2,9 +2,11 @@ package upload
 
 import (
 	"crypto/sha256"
+	"crypto/subtle"
 	"fmt"
 	"github.com/go-logr/logr"
 	"internal/advert"
+	"internal/constant"
 	"internal/env"
 	"internal/global"
 	"net/http"
@@ -42,18 +44,39 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	advertJson := r.Header.Get("advert")
+	err := r.ParseMultipartForm(5 * 1024 * 1024)
+	if err != nil {
+		msg := "Bad request, cant parse files. Error: " + err.Error()
+		http.Error(w, msg, http.StatusBadRequest)
+		return
+	}
+
+	adverts, ok := r.MultipartForm.Value["advert"]
+	if !ok || len(adverts) == 0 {
+		msg := "Bad request: no advert body."
+		http.Error(w, msg, http.StatusBadRequest)
+		return
+	}
+
+	advertJson := adverts[0]
 
 	a := &advert.Advert{}
-	err := a.Load(advertJson)
+	err = a.Load(advertJson)
 	if err != nil {
 		msg := "Bad request, bad advert body. Error: " + err.Error()
 		http.Error(w, msg, http.StatusBadRequest)
 		return
 	}
 
-	expectedHash := r.Header.Get("hash")
-	calculatedHash := fmt.Sprintf("%s", sha256.Sum256([]byte(advertJson)))
+	hash, ok := r.MultipartForm.Value["hash"]
+	if !ok || len(hash) == 0 {
+		msg := "Bad request: no hash."
+		http.Error(w, msg, http.StatusBadRequest)
+		return
+	}
+
+	expectedHash := hash[0]
+	calculatedHash := fmt.Sprintf("%x", sha256.Sum256([]byte(advertJson)))
 
 	if expectedHash != calculatedHash {
 		msg := "Bad request, different hash. Error: " + err.Error()
@@ -103,26 +126,29 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = r.ParseMultipartForm(5 * 1024 * 1024)
-	if err != nil {
-		msg := "Bad request, cant parse files. Error: " + err.Error()
+	images, ok := r.MultipartForm.File["images"]
+	if !ok || len(images) == 0 {
+		msg := "Bad request: no files."
 		http.Error(w, msg, http.StatusBadRequest)
+		return
 	}
 
 	ctx := r.Context()
 	var env = env.NewEnvironment(s.hub)
 	defer env.Close()
 
-	err = advert.CreateAdvert(ctx, env, a, r.MultipartForm.File)
+	err = advert.CreateAdvert(ctx, env, a, images)
 	if err != nil {
 		msg := "Can't save files. Error: " + err.Error()
 		http.Error(w, msg, http.StatusInternalServerError)
+		return
 	}
 
 	data, err := a.Save()
 	if err != nil {
 		msg := "Can't parse response. Error: " + err.Error()
 		http.Error(w, msg, http.StatusInternalServerError)
+		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
@@ -130,8 +156,8 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func isValidToken(token string) bool {
-	/*tokenBytes := []byte(token)
-	expectedBytes := []byte(constant.INFO_GATEWAY_TOKEN)
-	return subtle.ConstantTimeCompare(tokenBytes, expectedBytes) == 1*/
+	tokenBytes := []byte(token)
+	expectedBytes := []byte(constant.AdvertGatewayToken)
+	return subtle.ConstantTimeCompare(tokenBytes, expectedBytes) == 1
 	return true
 }

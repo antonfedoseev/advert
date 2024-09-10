@@ -8,25 +8,29 @@ services:
     entrypoint: /app/server/advertd/cmd/advertd
     container_name: advertd
     ports:
-      - "7979:7979"
-      - "44001:4001"
+      - "7000:7000" #advertd
+      - "7200:7200" #pprof
     security_opt:
       - "apparmor:unconfined"
       - "seccomp:unconfined"
     cap_add:
       - SYS_PTRACE
     volumes:
-      - server-data:/app/server/advertd
+      - persistent-data:/pet
     networks:
       - pet-backend-advertd
       - pet-backend-shared
 
 volumes:
-  server-data:
-    name: pet-server-vol
+  persistent-data:
+    external: true
+    name: pet-persistent-vol
 
 networks:
   pet-backend-advertd:
     external: true
   pet-backend-shared:
     external: true
+
+# E:\tools\nfs\WinNFSd.exe e:\tools\nfs\share\pet /pet
+# docker volume create --driver local --opt type=nfs --opt o=nfsvers=3,addr=host.docker.internal,rw --opt device=:/pet pet-persistent-vol

@@ -14,8 +14,8 @@ type Settings struct {
 	LogLevel      int                     `json:"log_level"`
 	DBs           db.Settings             `json:"dbs"`
 	RDs           rd.Settings             `json:"rds"`
-	StaticStorage static_storage.Settings `json:"static_storage"`
 	MessageBroker mb.Settings             `json:"mb"`
+	StaticStorage static_storage.Settings `json:"static_storage"`
 }
 
 func (s *Settings) Read(filePath string) error {

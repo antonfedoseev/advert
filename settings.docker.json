@@ -1,5 +1,5 @@
 {
-  "url_listen"  : ":7979",
+  "url_listen"  : ":7000",
   "log_level"   : 1,
 
   "dbs" : {
@@ -14,11 +14,11 @@
   },
 
   "static_storage" : {
-      "path" : "pet/adverts",
-      "url"  : "http://nginx:80"
+      "path" : "pet/photo",
+      "url"  : "http://localhost:80/photo"
   },
 
-  "message_broker" : {
+  "mb" : {
     "brokers"   : ["kafka1:9092", "kafka2:9093"],
     "producer"  : {
       "send_retries" : 3,

@@ -2,6 +2,7 @@ package advert
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"github.com/pkg/errors"
@@ -32,42 +33,46 @@ const (
 	ProductStateNew
 )
 
+var (
+	ErrDuplicateAdvert = errors.New("Advert already exist")
+)
+
 type SchemaProductDetails struct {
-	advertId     uint32
-	state        byte
-	price        uint32
-	category     byte
-	subCategory1 byte
-	subCategory2 byte
-	subCategory3 byte
-	geolocation  geo.Point
-	country      uint16
-	area         uint16
-	city         uint32
-	district     byte
+	AdvertId     uint32   `db:"advert_id"`
+	State        byte     `db:"state"`
+	Price        uint32   `db:"price"`
+	Category     byte     `db:"category"`
+	SubCategory1 byte     `db:"sub_category_1"`
+	SubCategory2 byte     `db:"sub_category_2"`
+	SubCategory3 byte     `db:"sub_category_3"`
+	Geolocation  db.Point `db:"geolocation"`
+	Country      uint16   `db:"country"`
+	Area         uint16   `db:"area"`
+	City         uint32   `db:"city"`
+	District     byte     `db:"district"`
 }
 
 type SchemaAdvert struct {
-	id          uint32
-	ownerId     uint32
-	title       string
-	description string
-	сTime       uint32
-	sTime       uint32
-	fTime       uint32
-	state       byte
+	Id          uint32 `db:"id"`
+	OwnerId     uint32 `db:"owner_id"`
+	Title       string `db:"title"`
+	Description string `db:"description"`
+	CTime       uint32 `db:"ctime"`
+	STime       uint32 `db:"stime"`
+	FTime       uint32 `db:"ftime"`
+	State       byte   `db:"state"`
 }
 
 type Advert struct {
-	Id             uint32
-	OwnerId        uint32
-	Title          string
-	Description    string
-	CTime          uint32
-	STime          uint32
-	FTime          uint32
-	State          Status
-	ProductDetails *ProductDetails
+	Id             uint32          `json:"id"`
+	OwnerId        uint32          `json:"owner_id"`
+	Title          string          `json:"title"`
+	Description    string          `json:"description"`
+	CTime          uint32          `json:"ctime"`
+	STime          uint32          `json:"stime"`
+	FTime          uint32          `json:"ftime"`
+	State          Status          `json:"state"`
+	ProductDetails *ProductDetails `json:"product_details"`
 	Photos         []*Photo
 }
 
@@ -80,21 +85,35 @@ func (a *Advert) Save() ([]byte, error) {
 }
 
 type ProductDetails struct {
-	State        byte
-	Price        uint32
-	Category     byte
-	SubCategory1 byte
-	SubCategory2 byte
-	SubCategory3 byte
-	Geolocation  geo.Point
-	Country      uint16
-	Area         uint16
-	City         uint32
-	District     byte
+	State        byte      `json:"state"`
+	Price        uint32    `json:"price"`
+	Category     byte      `json:"category"`
+	SubCategory1 byte      `json:"sub_category_1"`
+	SubCategory2 byte      `json:"sub_category_2"`
+	SubCategory3 byte      `json:"sub_category_3"`
+	Geolocation  geo.Point `json:"geolocation"`
+	Country      uint16    `json:"country"`
+	Area         uint16    `json:"area"`
+	City         uint32    `json:"city"`
+	District     byte      `json:"district"`
 }
 
 func CreateAdvert(ctx context.Context, env *env.Environment, advert *Advert,
-	multiFiles map[string][]*multipart.FileHeader) error {
+	multiFiles []*multipart.FileHeader) error {
+
+	dbConn, err := env.ShardDb(advert.OwnerId)
+	if err != nil {
+		return err
+	}
+
+	existingAdvert, err := getAdvert(dbConn, advert.Id, advert.OwnerId)
+	if err != nil {
+		return err
+	}
+
+	if existingAdvert != nil {
+		return errors.Wrapf(ErrDuplicateAdvert, "advert Id %d, owner Id %d", advert.Id, advert.OwnerId)
+	}
 
 	photoNames, err := storeUserPhotos(ctx, env, uint(advert.OwnerId), uint(advert.Id), multiFiles)
 	if err != nil {
@@ -102,12 +121,7 @@ func CreateAdvert(ctx context.Context, env *env.Environment, advert *Advert,
 	}
 
 	if len(photoNames) == 0 {
-		return errors.New("No photos have been got")
-	}
-
-	dbConn, err := env.ShardDb(advert.OwnerId)
-	if err != nil {
-		return err
+		return errors.New("No Photos have been got")
 	}
 
 	advert.CTime = uint32(time.Now().Unix())
@@ -158,18 +172,41 @@ func CreateAdvert(ctx context.Context, env *env.Environment, advert *Advert,
 	return err
 }
 
+func getAdvert(conn *db.Conn, id uint32, ownerId uint32) (*SchemaAdvert, error) {
+	var advert SchemaAdvert
+	sb := conn.Select("id, owner_id")
+	err := sb.From("advert").
+		Where(sb.Equal("id", id),
+			sb.Equal("owner_id", ownerId),
+		).Limit(1).
+		LoadStruct(&advert)
+
+	if err == sql.ErrNoRows {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	return &advert, nil
+}
+
 func sendProcessPhotosRequestToMb(ctx context.Context, env *env.Environment,
 	ownerId uint32, advertId uint32, photos []*SchemaPhoto) error {
 
-	req := &processPhotoRequest{
-		advertId: advertId,
-		ownerId:  ownerId,
-		photos:   getProcessPhotosInfo(photos),
+	req := &ProcessPhotoRequest{
+		AdvertId: advertId,
+		OwnerId:  ownerId,
+		Photos:   getProcessPhotosInfo(photos),
 	}
 
 	producer := env.MbProducer()
-	err := producer.SendMessage(ctx, "advert_process_photo_request",
-		fmt.Sprintf("%d_%d", ownerId, advertId), req)
+	err := producer.SendMessage(
+		ctx,
+		"advert_process_photo_request",
+		fmt.Sprintf("%d_%d", ownerId, advertId),
+		req,
+	)
 
 	return err
 }
@@ -179,17 +216,17 @@ func buildProductPhotosByNames(hostUrl string, advertId uint32, names []string) 
 	for i := 0; i < len(names); i++ {
 		id := i + 1
 		url, _ := url.JoinPath(hostUrl, names[i])
-		photos[i] = &SchemaPhoto{Id: uint32(id), AdvertId: advertId, Url: url, Order: byte(id)}
+		photos[i] = &SchemaPhoto{Id: uint32(id), AdvertId: advertId, Url: url, Position: byte(id)}
 	}
 	return photos
 }
 
 func createProductPhotos(conn *db.Conn, photos []*SchemaPhoto) error {
 	builder := conn.InsertInto("product_photo").
-		Cols("id", "advert_id", "url", "order")
+		Cols("id", "advert_id", "url", "position")
 
 	for _, photo := range photos {
-		builder.Values(photo.Id, photo.AdvertId, photo.Url, photo.Order)
+		builder.Values(photo.Id, photo.AdvertId, photo.Url, photo.Position)
 	}
 
 	_, err := builder.Exec()
@@ -197,14 +234,24 @@ func createProductPhotos(conn *db.Conn, photos []*SchemaPhoto) error {
 }
 
 func createProductDetails(conn *db.Conn, details *SchemaProductDetails) error {
+	/*_, err := conn.InsertInto("product_details").
+	Cols("advert_id", "State", "Price", "Category", "sub_category_1",
+		"sub_category_2", "sub_category_3", "Geolocation", "Country", "Area",
+		"City", "District").
+	Values(details.AdvertId, details.State, details.Price,
+		details.Category, details.SubCategory1, details.SubCategory2,
+		details.SubCategory3, details.Geolocation, details.Country,
+		details.Area, details.City, details.District).
+	Exec()*/
+
 	_, err := conn.InsertInto("product_details").
-		Cols("advert_id", "state", "price", "category", "sub_category_1",
-			"sub_category_2", "sub_category_3", "geolocation", "country", "area",
-			"city", "district").
-		Values(details.advertId, details.state, details.price,
-			details.category, details.subCategory1, details.subCategory2,
-			details.subCategory3, details.geolocation, details.country,
-			details.area, details.city, details.district).
+		SQL(
+			fmt.Sprintf("(advert_id, state, price, category, sub_category_1, sub_category_2, sub_category_3, geolocation, country, area, city, district) values (%d,%d,%d,%d,%d,%d,%d,%s,%d,%d,%d,%d)",
+				details.AdvertId, details.State, details.Price,
+				details.Category, details.SubCategory1, details.SubCategory2,
+				details.SubCategory3,
+				fmt.Sprintf("ST_GeomFromText('POINT(%f %f)')", details.Geolocation.Longitude, details.Geolocation.Latitude),
+				details.Country, details.Area, details.City, details.District)).
 		Exec()
 
 	return err
@@ -213,8 +260,8 @@ func createProductDetails(conn *db.Conn, details *SchemaProductDetails) error {
 func createAdvert(conn *db.Conn, advert *SchemaAdvert) error {
 	_, err := conn.InsertInto("advert").
 		Cols("id", "owner_id", "title", "description", "сtime", "state").
-		Values(advert.id, advert.ownerId, advert.title, advert.description,
-			advert.сTime, advert.state).
+		Values(advert.Id, advert.OwnerId, advert.Title, advert.Description,
+			advert.CTime, advert.State).
 		Exec()
 
 	return err
@@ -246,7 +293,7 @@ func convertProductPhotoDbToBusiness(schemaPhoto *SchemaPhoto) *Photo {
 		schemaPhoto.UrlSmall,
 		schemaPhoto.UrlMedium,
 		schemaPhoto.UrlBig,
-		schemaPhoto.Order,
+		schemaPhoto.Position,
 	}
 }
 
@@ -272,7 +319,7 @@ func convertProductDetailsBusinessToDb(advertId uint32, details *ProductDetails)
 		details.SubCategory1,
 		details.SubCategory2,
 		details.SubCategory3,
-		details.Geolocation,
+		db.Point{Longitude: details.Geolocation.Longitude, Latitude: details.Geolocation.Latitude},
 		details.Country,
 		details.Area,
 		details.City,
