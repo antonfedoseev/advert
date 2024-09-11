@@ -3,6 +3,7 @@ module advertd
 go 1.22.3
 
 require (
+	go.uber.org/automaxprocs v1.5.3
 	github.com/go-logr/logr v1.2.3
 	github.com/go-logr/zapr v1.2.3
 	go.uber.org/zap v1.19.0

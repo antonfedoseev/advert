@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/go-logr/logr"
 	"github.com/go-logr/zapr"
+	_ "go.uber.org/automaxprocs"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"internal/constant"
@@ -38,7 +39,6 @@ const (
  ||        ||
 ||          ||
 `
-	appName = "advertd"
 )
 
 var (
@@ -60,14 +60,14 @@ func main() {
 	}
 
 	logger := newLogger(settings.LogLevel, constant.LogAppPrefix)
-	logger.Info("Starting advertd", "executable_path", exPath,
+	logger.Info(fmt.Sprintf("Starting %s", constant.LogAppPrefix), "executable_path", exPath,
 		"version", constant.AppVersion, "runtime_version", runtime.Version(), "os", runtime.GOOS, "arch", runtime.GOARCH,
 		"addr", settings.UrlListen, "pid_file", *pidFile)
 	logger.V(1).Info(logo)
 
 	producer := mb.NewProducer(settings.MessageBroker)
 
-	hub := global.New(exPath, settings, logger, appName, producer)
+	hub := global.New(exPath, settings, logger, constant.AppName, producer)
 	defer hub.Dispose()
 
 	consumer := mb.NewConsumer(ctx, settings.MessageBroker, logger, rpc.NewMbHandler(hub))
@@ -99,7 +99,7 @@ func initSettings(path string) (settings.Settings, error) {
 	return s, err
 }
 
-func newLogger(logLevel int, app string) logr.Logger {
+func newLogger(logLevel int, appName string) logr.Logger {
 	var logger logr.Logger
 	//setting production level
 	if logLevel == 0 {
@@ -127,7 +127,7 @@ func newLogger(logLevel int, app string) logr.Logger {
 		logger = zapr.NewLogger(zl)
 	}
 
-	logger = logger.WithValues("pid", syscall.Getpid(), "app", app)
+	logger = logger.WithName(fmt.Sprintf("[%s]", appName)).WithValues("pid", syscall.Getpid())
 
 	return logger
 }

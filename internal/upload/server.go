@@ -5,11 +5,16 @@ import (
 	"crypto/subtle"
 	"fmt"
 	"github.com/go-logr/logr"
+	"github.com/pkg/errors"
 	"internal/advert"
 	"internal/constant"
 	"internal/env"
 	"internal/global"
+	"mime/multipart"
 	"net/http"
+	"path/filepath"
+	"slices"
+	"strings"
 )
 
 const (
@@ -133,6 +138,13 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	err = validateImages(images)
+	if err != nil {
+		msg := "Bad request, bad image. Error: " + err.Error()
+		http.Error(w, msg, http.StatusBadRequest)
+		return
+	}
+
 	ctx := r.Context()
 	var env = env.NewEnvironment(s.hub)
 	defer env.Close()
@@ -153,6 +165,21 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(data)
+}
+
+var supportedExtension = []string{
+	"png",
+}
+
+func validateImages(images []*multipart.FileHeader) error {
+	for _, image := range images {
+		ext := strings.ToLower(strings.TrimPrefix(filepath.Ext(image.Filename), "."))
+		if !slices.Contains(supportedExtension, ext) {
+			return errors.Errorf("unsupported image extension \"%s\"", ext)
+		}
+	}
+
+	return nil
 }
 
 func isValidToken(token string) bool {

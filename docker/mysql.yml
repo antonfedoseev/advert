@@ -4,14 +4,16 @@ services:
   mysql:
     restart: always
     image: mysql:5.7.41
-    container_name: mysql
+    container_name: mysql-ad
     environment:
       MYSQL_ROOT_PASSWORD: test
-      MYSQL_ROOT_HOST: 0.0.0.0
+      MYSQL_ROOT_HOST: "%"
     ports:
       - "3306:3306"
     volumes:
-      - ../../persistent/mysql/advert/data:/var/lib/mysql
+      - ./my.cnf:/etc/mysql/conf.d/config-file.cnf
+      - ../../../persistent/mysql/advert/data:/var/lib/mysql
+      - ../../../persistent/mysql/advert/log:/var/log/mysql
     networks:
       - pet-backend-advertd
 

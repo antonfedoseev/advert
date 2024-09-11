@@ -3,14 +3,14 @@
   "log_level"   : 1,
 
   "dbs" : {
-    "main"       : {"diver" : "mysql", "host" : "mysql", "port" : 3306, "username" : "root", "password" : "test", "name" : "pet_advert",              "max_idle_cons" : 10, "max_open_cons" : 0, "conn_max_lifetime_sec" : 0, "conn_max_idle_time_sec" : 600},
-    "shard_01"   : {"diver" : "mysql", "host" : "mysql", "port" : 3306, "username" : "root", "password" : "test", "name" : "pet_advert_shard_01",     "max_idle_cons" : 10, "max_open_cons" : 0, "conn_max_lifetime_sec" : 0, "conn_max_idle_time_sec" : 600},
-    "shard_02"   : {"diver" : "mysql", "host" : "mysql", "port" : 3306, "username" : "root", "password" : "test", "name" : "pet_advert_shard_02",     "max_idle_cons" : 10, "max_open_cons" : 0, "conn_max_lifetime_sec" : 0, "conn_max_idle_time_sec" : 600},
-    "shard_03"   : {"diver" : "mysql", "host" : "mysql", "port" : 3306, "username" : "root", "password" : "test", "name" : "pet_advert_shard_03",     "max_idle_cons" : 10, "max_open_cons" : 0, "conn_max_lifetime_sec" : 0, "conn_max_idle_time_sec" : 600}
+    "main"       : {"diver" : "mysql", "host" : "mysql-ad", "port" : 3306, "username" : "root", "password" : "test", "name" : "pet_advert",              "max_idle_cons" : 10, "max_open_cons" : 0, "conn_max_lifetime_sec" : 0, "conn_max_idle_time_sec" : 600},
+    "shard_01"   : {"diver" : "mysql", "host" : "mysql-ad", "port" : 3306, "username" : "root", "password" : "test", "name" : "pet_advert_shard_01",     "max_idle_cons" : 10, "max_open_cons" : 0, "conn_max_lifetime_sec" : 0, "conn_max_idle_time_sec" : 600},
+    "shard_02"   : {"diver" : "mysql", "host" : "mysql-ad", "port" : 3306, "username" : "root", "password" : "test", "name" : "pet_advert_shard_02",     "max_idle_cons" : 10, "max_open_cons" : 0, "conn_max_lifetime_sec" : 0, "conn_max_idle_time_sec" : 600},
+    "shard_03"   : {"diver" : "mysql", "host" : "mysql-ad", "port" : 3306, "username" : "root", "password" : "test", "name" : "pet_advert_shard_03",     "max_idle_cons" : 10, "max_open_cons" : 0, "conn_max_lifetime_sec" : 0, "conn_max_idle_time_sec" : 600}
   },
 
   "rds" : {
-    "main" : { "prefix" : "main", "host" : "redis", "port" : 6379, "DB" : 0, "log_level" :  1, "client_name" : "advertd_main", "max_idle_cons" : 16, "conn_max_idle_time_sec" : 240}
+    "main" : { "prefix" : "main", "host" : "redis-ad", "port" : 6379, "DB" : 0, "log_level" :  1, "client_name" : "advertd_main", "max_idle_cons" : 16, "conn_max_idle_time_sec" : 240}
   },
 
   "static_storage" : {

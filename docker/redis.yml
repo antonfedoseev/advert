@@ -4,11 +4,14 @@ services:
   redis:
     restart: always
     image: redis:6.0
-    container_name: redis
+    container_name: redis-ad
+    command: >
+      --include /usr/local/etc/redis/redis.conf
     ports:
       - "6379:6379"
     volumes:
-      - ../../persistent/redis/advert/data:/data
+      - ./redis.conf:/usr/local/etc/redis/redis.conf
+      - ../../../persistent/redis/advert/data:/data
     networks:
       - pet-backend-advertd
 
